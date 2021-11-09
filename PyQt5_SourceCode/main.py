@@ -1,7 +1,19 @@
+import os
 import sys
+import typing
 
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui, QtCore, QtMultimedia
 from progressbar import QRoundProgressBar
+
+TIME_COUNT = 60 * 6
+SOUND_FILE = os.path.join("sound", "tick_sound_small.wav")
+
+
+# sound_file_url = QtCore.QUrl.fromLocalFile(SOUND_FILE)
+# content = QtMultimedia.QMediaContent(sound_file_url)
+# player = QtMultimedia.QMediaPlayer()
+# player.setMedia(content)
+# player.setVolume(100)
 
 
 class HomeWindow(QtWidgets.QMainWindow):
@@ -28,7 +40,7 @@ class HomeWindow(QtWidgets.QMainWindow):
         self.progress_bar.set_format("%p")
         # self.bar.resetFormat()
         self.progress_bar.set_null_position(90)
-        self.progress_bar.set_value(0)
+        self.progress_bar.value = 0
         self.progress_bar.setBarStyle(QRoundProgressBar.StylePie)
 
         # set color gradient
@@ -43,12 +55,24 @@ class HomeWindow(QtWidgets.QMainWindow):
         self.grid_layout1.addWidget(self.push_button_start)
 
         self.push_button_start.clicked.connect(self.start_timer)
+        # self.play_tick()
+
+    def play_tick(self):
+        self.sound = QtMultimedia.QSoundEffect()
+        self.sound.setSource(QtCore.QUrl.fromLocalFile(SOUND_FILE))
+        self.sound.setLoopCount(QtMultimedia.QSoundEffect.Infinite)
+        self.sound.setVolume(100)
+        self.sound.play()
 
     def start_timer(self):
         self.time_count = 0
         # set progressbar value and range
-        self.progress_bar.set_range(0, 100)
-        self.progress_bar.set_value(0)
+        self.progress_bar.set_range(0, TIME_COUNT)
+        self.progress_bar._value = 0.0
+        self.progress_bar.info_trail_str = " seconds"
+
+        self.update_data()  # call first time for immediate response
+        self.play_tick()
 
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1000)
@@ -57,14 +81,30 @@ class HomeWindow(QtWidgets.QMainWindow):
 
         self.push_button_start.setDisabled(True)
 
-    def update_data(self):
-        self.time_count += 1
-
-        if self.time_count >= 100:
+    def check_time(self):
+        if self.time_count >= TIME_COUNT:
+            print("Timer stopped")
             self.timer.stop()
+            self.value_animation.stop()
+            self.progress_bar.value = TIME_COUNT
             self.push_button_start.setDisabled(False)
+            self.sound.stop()
+        self.update()
 
-        self.progress_bar.set_value(self.time_count)
+    def update_data(self):
+        self.time_count += 1.0
+
+        # self.play_tick()
+
+        self.value_animation = QtCore.QPropertyAnimation(self.progress_bar, b'value')
+        self.value_animation.setStartValue(self.time_count - 1)
+        self.value_animation.setEndValue(self.time_count)
+        self.value_animation.setDuration(1000)
+        self.value_animation.setLoopCount(5)
+        self.value_animation.setEasingCurve(QtCore.QEasingCurve.Linear)
+        self.value_animation.start()
+
+        self.check_time()
 
 
 if __name__ == '__main__':

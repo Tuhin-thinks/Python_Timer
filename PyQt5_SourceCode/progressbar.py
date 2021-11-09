@@ -2,8 +2,10 @@
 Source code taken from https://stackoverflow.com/questions/33577068/any-pyqt-circular-progress-bar
 Updated for PyQt5.
 """
+import math
 from typing import Union
 from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtCore import pyqtProperty
 
 
 class QRoundProgressBar(QtWidgets.QWidget):
@@ -11,7 +13,9 @@ class QRoundProgressBar(QtWidgets.QWidget):
     StylePie = 2
     StyleLine = 3
 
-    c_font = QtGui.QFont('Arial', 8)
+    c_font = QtGui.QFont("Ubuntu Thin", 15, 50)
+    info_trail_str = ""
+    info_head = "–"
 
     PositionLeft = 180
     PositionTop = 90
@@ -27,7 +31,7 @@ class QRoundProgressBar(QtWidgets.QWidget):
 
         self.minValue = 0
         self.maxValue = 100
-        self.value = 20
+        self._value = 0.0
 
         self.nullPosition = self.PositionTop
         self.barStyle = self.StyleDonut
@@ -55,10 +59,10 @@ class QRoundProgressBar(QtWidgets.QWidget):
         if self.maxValue < self.minValue:
             self.maxValue, self.minValue = self.minValue, self.maxValue
 
-        if self.value < self.minValue:
-            self.value = self.minValue
-        elif self.value > self.maxValue:
-            self.value = self.maxValue
+        if self._value < self.minValue:
+            self._value = self.minValue
+        elif self._value > self.maxValue:
+            self._value = self.maxValue
 
         if not self.gradientData:
             self.rebuildBrush = True
@@ -70,14 +74,19 @@ class QRoundProgressBar(QtWidgets.QWidget):
     def set_max(self, max_value: int):
         self.set_range(self.minValue, max_value)
 
-    def set_value(self, val: int):
-        if self.value != val:
+    @pyqtProperty(float)
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, val: float):
+        if self._value <= val:
             if val < self.minValue:
-                self.value = self.minValue
+                self._value = self.minValue
             elif val > self.maxValue:
-                self.value = self.maxValue
+                self._value = self.maxValue
             else:
-                self.value = val
+                self._value = val
             self.update()
 
     def set_null_position(self, position):
@@ -146,17 +155,15 @@ class QRoundProgressBar(QtWidgets.QWidget):
         self.drawBase(p, baseRect)
 
         # data circle
-        arcStep = 360.0 / (self.maxValue - self.minValue) * self.value
-        self.drawValue(p, baseRect, self.value, arcStep)
+        arcStep = 360.0 / (self.maxValue - self.minValue) * self._value
+        self.drawValue(p, baseRect, self._value, arcStep)
 
         # center circle
         innerRect, innerRadius = self.calculateInnerRect(outerRadius)
         self.drawInnerBackground(p, innerRect)
 
-        # TODO: Just for test
-
         # text
-        self.drawText(p, innerRect, innerRadius, self.value)
+        self.drawText(p, innerRect, innerRadius, self._value)
 
         # finally draw the bar
         p.end()
@@ -196,8 +203,7 @@ class QRoundProgressBar(QtWidgets.QWidget):
             painter.drawArc(
                 base_rect.adjusted(self.outlinePenWidth / 2, self.outlinePenWidth / 2, -self.outlinePenWidth / 2,
                                    -self.outlinePenWidth / 2),
-                self.nullPosition * 16,
-                - int(step) * 16)
+                self.nullPosition * 16, - int(step) * 16)
             return
 
         # for Pie and Donut styles
@@ -236,26 +242,31 @@ class QRoundProgressBar(QtWidgets.QWidget):
             p.setCompositionMode(cmod)
 
     def drawText(self, p, innerRect, innerRadius, value):
+        def conditional_pen():
+            if (remaining_value / self.maxValue) > 0.58:
+                return QtCore.Qt.red
+            elif (remaining_value / self.maxValue) > 0.40:
+                return QtCore.Qt.black
+            else:
+                return QtCore.Qt.white
+
         if not self.format:
             return
 
         text = self.valueToText(value)
-        remaining = self.maxValue - value
+        remaining_value = self.maxValue - value
 
-        # !!! to revise
         f = self.custom_font
-        # f.setPixelSize(innerRadius * max(0.05, (0.35 - self.decimals * 0.08)))
         f.setPixelSize(innerRadius * 1.0 / len(text))
         p.setFont(f)
 
-        textRect = innerRect
         p.setPen(self.palette().text().color())
-        p.drawText(textRect, QtCore.Qt.AlignCenter, text)
+        p.drawText(innerRect, QtCore.Qt.AlignCenter, text)
 
         # create the info rect (to show the remaining time information etc.)
 
         # # calculate rect dimensions
-        bottom_left, bottom_right = textRect.bottomLeft(), textRect.bottomRight()
+        bottom_left, bottom_right = innerRect.bottomLeft(), innerRect.bottomRight()
         rect_height = 50
         top_y = bottom_left.y() - rect_height
         bottom_y = bottom_left.y()
@@ -264,11 +275,22 @@ class QRoundProgressBar(QtWidgets.QWidget):
 
         # # draw the rect
         infoRect = QtCore.QRectF(QtCore.QPointF(left_x, top_y), QtCore.QPointF(right_x, bottom_y))
-        p.setPen(QtGui.QPen(QtCore.Qt.red if remaining > 58 else QtCore.Qt.black))
+
+        # variable font-color changing using preset conditions
+        p.setPen(conditional_pen())
+
         f2 = self.custom_font
         f2.setPixelSize(20)
-        p.setFont(f2)
-        p.drawText(infoRect, QtCore.Qt.AlignCenter, f"remaining: {remaining}")
+
+        if remaining_value <= 0:
+            f2.setBold(True)
+            p.setFont(f2)
+            p.drawText(infoRect, QtCore.Qt.AlignCenter, "Time's up!")
+        else:
+            p.setFont(f2)
+            p.drawText(infoRect, QtCore.Qt.AlignCenter, f"{self.info_head}{remaining_value:.02f}{self.info_trail_str}")
+
+        self.update()
 
     def valueToText(self, value: Union[float, int]):
         """function to convert a float or int value to string with specific format"""
@@ -277,14 +299,13 @@ class QRoundProgressBar(QtWidgets.QWidget):
 
         # format_string = '{' + ':.{}f'.format(self.decimals) + '}'
         format_string = "{:02d}"
-        value = int(value)
 
         if self.updateFlags & self.UF_VALUE:
             textToDraw = textToDraw.replace("%v", format_string.format(value))
 
         if self.updateFlags & self.UF_PERCENT:
             percent = (value - self.minValue) / (self.maxValue - self.minValue) * 100.0
-            textToDraw = textToDraw.replace("%p", format_string.format(int(percent)))
+            textToDraw = textToDraw.replace("%p", format_string.format(math.floor(percent)))
 
         if self.updateFlags & self.UF_MAX:
             m = self.maxValue - self.minValue + 1
