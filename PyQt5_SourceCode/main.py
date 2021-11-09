@@ -11,6 +11,7 @@ class HomeWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("Circular Timer")
 
         self.central_widget = QtWidgets.QWidget(self)
+        self.resize(QtCore.QSize(560, 560))
         self.setCentralWidget(self.central_widget)
 
         self.grid_layout1 = QtWidgets.QGridLayout(self.central_widget)
@@ -18,22 +19,22 @@ class HomeWindow(QtWidgets.QMainWindow):
 
         # ------------------- CREATE PROGRESS BAR -------------------------
         self.progress_bar = QRoundProgressBar(self.central_widget)
+        self.progress_bar.decimals = 0
         self.progress_bar.setFixedSize(300, 300)
-
         self.progress_bar.setDataPenWidth(3)
-        self.progress_bar.setOutlinePenWidth(3)
+        self.progress_bar.set_outline_pen_width(3)
         self.progress_bar.setDonutThicknessRatio(0.85)
         self.progress_bar.setDecimals(1)
-        self.progress_bar.setFormat("%p")
+        self.progress_bar.set_format("%p")
         # self.bar.resetFormat()
-        self.progress_bar.setNullPosition(90)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setBarStyle(QRoundProgressBar.StyleDonut)
+        self.progress_bar.set_null_position(90)
+        self.progress_bar.set_value(0)
+        self.progress_bar.setBarStyle(QRoundProgressBar.StylePie)
 
         # set color gradient
-        self.progress_bar.setDataColors([(0., QtGui.QColor.fromRgb(0, 255, 0)),
-                                         (0.5, QtGui.QColor.fromRgb(255, 255, 0)),
-                                         (1., QtGui.QColor.fromRgb(255, 0, 0))])
+        self.progress_bar.setDataColors([(0., QtGui.QColor.fromRgb(255, 51, 51)),
+                                         (0.5, QtGui.QColor.fromRgb(204, 0, 0)),
+                                         (1., QtGui.QColor.fromRgb(92, 7, 7))])
 
         self.grid_layout1.addWidget(self.progress_bar)
         # --------------------- PROGRESSBAR END --------------------------
@@ -46,8 +47,8 @@ class HomeWindow(QtWidgets.QMainWindow):
     def start_timer(self):
         self.time_count = 0
         # set progressbar value and range
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setValue(0)
+        self.progress_bar.set_range(0, 100)
+        self.progress_bar.set_value(0)
 
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1000)
@@ -63,7 +64,7 @@ class HomeWindow(QtWidgets.QMainWindow):
             self.timer.stop()
             self.push_button_start.setDisabled(False)
 
-        self.progress_bar.setValue(self.time_count)
+        self.progress_bar.set_value(self.time_count)
 
 
 if __name__ == '__main__':
