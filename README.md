@@ -1,4 +1,4 @@
-# Python_Timer
+# Timer
 ### A modern looking timer built with PyQt5
 
 <p align="center"><h2>Python_Timer <u>Preview</u>:</h2></p>
