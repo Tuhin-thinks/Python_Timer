@@ -1,19 +1,12 @@
 import os
 import sys
-import typing
 
 from PyQt5 import QtWidgets, QtGui, QtCore, QtMultimedia
+
 from progressbar import QRoundProgressBar
 
 TIME_COUNT = 60 * 6
 SOUND_FILE = os.path.join("sound", "tick_sound_small.wav")
-
-
-# sound_file_url = QtCore.QUrl.fromLocalFile(SOUND_FILE)
-# content = QtMultimedia.QMediaContent(sound_file_url)
-# player = QtMultimedia.QMediaPlayer()
-# player.setMedia(content)
-# player.setVolume(100)
 
 
 class HomeWindow(QtWidgets.QMainWindow):
