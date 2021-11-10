@@ -203,7 +203,7 @@ class QRoundProgressBar(QtWidgets.QWidget):
             painter.drawArc(
                 base_rect.adjusted(self.outlinePenWidth / 2, self.outlinePenWidth / 2, -self.outlinePenWidth / 2,
                                    -self.outlinePenWidth / 2),
-                self.nullPosition * 16, - int(step) * 16)
+                self.nullPosition * 16, - step * 16)
             return
 
         # for Pie and Donut styles
@@ -286,6 +286,9 @@ class QRoundProgressBar(QtWidgets.QWidget):
             f2.setBold(True)
             p.setFont(f2)
             p.drawText(infoRect, QtCore.Qt.AlignCenter, "Time's up!")
+        elif remaining_value == self.maxValue:
+            p.setFont(f2)
+            p.drawText(infoRect, QtCore.Qt.AlignCenter, f"--:--")
         else:
             p.setFont(f2)
             p.drawText(infoRect, QtCore.Qt.AlignCenter, f"{self.info_head}{remaining_value:.02f}{self.info_trail_str}")
@@ -305,7 +308,7 @@ class QRoundProgressBar(QtWidgets.QWidget):
 
         if self.updateFlags & self.UF_PERCENT:
             percent = (value - self.minValue) / (self.maxValue - self.minValue) * 100.0
-            textToDraw = textToDraw.replace("%p", format_string.format(math.floor(percent)))
+            textToDraw = textToDraw.replace("%p", format_string.format(math.ceil(percent)))
 
         if self.updateFlags & self.UF_MAX:
             m = self.maxValue - self.minValue + 1
