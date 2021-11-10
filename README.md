@@ -9,7 +9,7 @@ A modern looking timer built with PyQt5, for the purpose of taking countdown.
 - ### Python Version >= 3.7
 
 - ### Installation Required
-    - PyQt5
+    - PyQt5 [(How to install ?)](https://pypi.org/project/PyQt5/)
 
 Navigate to [Source Code Directory](./PyQt5_SourceCode), and run the following command from terminal:
 ```bash
