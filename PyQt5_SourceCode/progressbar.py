@@ -191,7 +191,8 @@ class QRoundProgressBar(QtWidgets.QWidget):
                 baseRect.adjusted(self.outlinePenWidth / 2, self.outlinePenWidth / 2, -self.outlinePenWidth / 2,
                                   -self.outlinePenWidth / 2))
 
-    def drawValue(self, painter: 'QtGui.QPainter', base_rect: 'QtCore.QRectF', value: int, step: int):
+    def drawValue(self, painter: 'QtGui.QPainter', base_rect: 'QtCore.QRectF', value: Union[float, int],
+                  step: Union[float, int]):
         # nothing to draw
         if value == self.minValue:
             return
